@@ -46,8 +46,8 @@
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { VRM, VRMUtils, VRMLoaderPlugin } from '@pixiv/three-vrm';
-    import { VRMAnimationLoaderPlugin, VRMAnimationClipBuilder } from '@pixiv/three-vrm-animation';
+    import { VRMUtils, VRMLoaderPlugin } from '@pixiv/three-vrm';
+    import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 
     const canvas = document.getElementById('c');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -110,7 +110,12 @@
       log('Loaded VRM: ' + (vrm.meta?.title || file.name));
 
       // fit view
-      controls.target.copy(vrm.humanoid.getBoneNode('hips').getWorldPosition(new THREE.Vector3()));
+      const hips = vrm.humanoid?.getBoneNode('hips');
+      if (hips) {
+        controls.target.copy(hips.getWorldPosition(new THREE.Vector3()));
+      } else {
+        controls.target.set(0, 1.2, 0);
+      }
       controls.update();
     }
 
@@ -123,8 +128,15 @@
       loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
       const arrayBuffer = await file.arrayBuffer();
       const gltf = await loader.parseAsync(arrayBuffer, '');
-      const vrma = gltf.userData.vrmAnimation;
-      const clip = VRMAnimationClipBuilder.build(vrma, currentVRM);
+
+      // new API returns vrmAnimations array
+      const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
+      if (!vrma) {
+        log('VRMA が見つかりません');
+        return;
+      }
+
+      const clip = createVRMAnimationClip(vrma, currentVRM);
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
       } else {
