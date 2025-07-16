@@ -108,7 +108,7 @@
       log('Loaded VRM: ' + (vrm.meta?.title || file.name));
 
       // fit view
-      const hips = vrm.humanoid?.getBoneNode('hips');
+      const hips = vrm.humanoid?.getNormalizedBoneNode('hips') || vrm.humanoid?.getRawBoneNode('hips');
       if (hips) {
         controls.target.copy(hips.getWorldPosition(new THREE.Vector3()));
       } else {
@@ -133,7 +133,9 @@
         return;
       }
 
-      const clip = createVRMAnimationClip(vrma, currentVRM);
+      // -- 変更点ここ：Binder オブジェクトで VRM を渡す --
+      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
+
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
       } else {
