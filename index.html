@@ -127,14 +127,18 @@
       const arrayBuffer = await file.arrayBuffer();
       const gltf = await loader.parseAsync(arrayBuffer, '');
 
-      const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
+            const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
       if (!vrma) {
         log('VRMA が見つかりません');
         return;
       }
 
-      // -- 変更点ここ：Binder オブジェクトで VRM を渡す --
-      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
+      // --- VRMA meta fallback (specVersion が無い古い VRMA 対策) ---
+      if (!vrma.meta) {
+        vrma.meta = { metaVersion: '1.0' };
+      }
+
+      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });vrma, { vrm: currentVRM });
 
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
