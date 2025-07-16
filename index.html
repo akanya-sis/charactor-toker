@@ -41,13 +41,14 @@
   <canvas id="c"></canvas>
 
   <script type="module">
+    /** @ts-check */
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { VRMUtils, VRMLoaderPlugin } from '@pixiv/three-vrm';
     import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
 
-    const canvas = document.getElementById('c');
+    const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('c'));
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -70,8 +71,9 @@
     const grid = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
     scene.add(grid);
 
-    // mixers
+    /** @type {THREE.AnimationMixer | null} */
     let mixer = null;
+    /** @type {import('@pixiv/three-vrm').VRM | null} */
     let currentVRM = null;
 
     function unloadCurrentVRM() {
@@ -127,13 +129,14 @@
       const arrayBuffer = await file.arrayBuffer();
       const gltf = await loader.parseAsync(arrayBuffer, '');
 
+      /** @type {any} */
       const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
       if (!vrma) {
         log('VRMA が見つかりません');
         return;
       }
 
-            // --- VRMA meta fallback (specVersion が無い / metaVersion が無い古い VRMA 対策) ---
+      // --- VRMA meta fallback (specVersion / metaVersion が無い古い VRMA 対策) ---
       if (!vrma.meta) {
         vrma.meta = { metaVersion: '1.0' };
       }
@@ -141,7 +144,7 @@
         vrma.meta.metaVersion = '1.0';
       }
 
-      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM }); = createVRMAnimationClip(vrma, { vrm: currentVRM });
+      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
 
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
@@ -166,11 +169,11 @@
 
     // UI events
     document.getElementById('vrmInput').addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
+      const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
       if (file) loadVRM(file).then(() => tryPlayDefaultIdle());
     });
     document.getElementById('animInput').addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
+      const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
       if (file) loadAndPlayVRMA(file);
     });
 
@@ -187,7 +190,7 @@
 
     // log helper
     function log(msg) {
-      const div = document.getElementById('log');
+      const div = /** @type {HTMLDivElement} */ (document.getElementById('log'));
       div.textContent = msg;
       console.log(msg);
     }
