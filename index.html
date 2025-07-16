@@ -133,12 +133,15 @@
         return;
       }
 
-      // --- VRMA meta fallback (specVersion が無い古い VRMA 対策) ---
+            // --- VRMA meta fallback (specVersion が無い / metaVersion が無い古い VRMA 対策) ---
       if (!vrma.meta) {
         vrma.meta = { metaVersion: '1.0' };
       }
+      if (!vrma.meta.metaVersion) {
+        vrma.meta.metaVersion = '1.0';
+      }
 
-      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
+      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM }); = createVRMAnimationClip(vrma, { vrm: currentVRM });
 
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
