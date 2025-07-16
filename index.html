@@ -180,7 +180,7 @@
 
       ensureVRMMeta(currentVRM);
 
-      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
+      const clip = createVRMAnimationClip(vrma, currentVRM);
 
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
