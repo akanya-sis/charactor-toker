@@ -127,7 +127,7 @@
       const arrayBuffer = await file.arrayBuffer();
       const gltf = await loader.parseAsync(arrayBuffer, '');
 
-            const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
+      const vrma = gltf.userData.vrmAnimation || gltf.userData.vrmAnimations?.[0];
       if (!vrma) {
         log('VRMA が見つかりません');
         return;
@@ -138,7 +138,7 @@
         vrma.meta = { metaVersion: '1.0' };
       }
 
-      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });vrma, { vrm: currentVRM });
+      const clip = createVRMAnimationClip(vrma, { vrm: currentVRM });
 
       if (!mixer) {
         mixer = new THREE.AnimationMixer(currentVRM.scene);
