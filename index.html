@@ -76,6 +76,21 @@
     /** @type {import('@pixiv/three-vrm').VRM | null} */
     let currentVRM = null;
 
+    /**
+     * VRM1.0/0.x の一部エクスポートでは vrm.meta や meta.metaVersion が欠落している場合がある。
+     * ライブラリ内部で metaVersion を参照する API があるため、欠損時はデフォルトを補完して事故を防ぐ。
+     * @param {import('@pixiv/three-vrm').VRM} vrm
+     */
+    function ensureVRMMeta(vrm) {
+      if (!vrm.meta) {
+        vrm.meta = /** @type {any} */ ({ metaVersion: '1.0' });
+        return;
+      }
+      if (!vrm.meta.metaVersion) {
+        vrm.meta.metaVersion = '1.0';
+      }
+    }
+
     function unloadCurrentVRM() {
       if (currentVRM) {
         currentVRM.scene.traverse((obj) => {
@@ -103,7 +118,8 @@
 
       const arrayBuffer = await file.arrayBuffer();
       const gltf = await loader.parseAsync(arrayBuffer, '');
-      const vrm = gltf.userData.vrm;
+      const vrm = /** @type {import('@pixiv/three-vrm').VRM} */ (gltf.userData.vrm);
+      ensureVRMMeta(vrm); // ---- ⭐ metaVersion フォールバックを先に適用 ----
       currentVRM = vrm;
       scene.add(vrm.scene);
 
