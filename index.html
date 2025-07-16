@@ -80,71 +80,25 @@
      * Ensure vrm.meta.metaVersion exists ('0' | '1').
      * @param {import('@pixiv/three-vrm').VRM} vrm
      */
-    function ensureVRMMeta(vrm) {
-      try {
-        if (vrm.meta == null) {
-          Object.defineProperty(vrm, 'meta', {
-            value: { metaVersion: '1' },
-            writable: false,
-            configurable: true,
-          });
-        } else if (vrm.meta.metaVersion == null) {
-          vrm.meta.metaVersion = '1';
-        } else if (vrm.meta.metaVersion === '1.0') {
-          vrm.meta.metaVersion = '1';
-        }
-      } catch (e) {
-        console.warn('ensureVRMMeta failed', e);
-      }
-    }
+        /**
+     * VRM 0.x では vrm.meta や meta.metaVersion が欠落していることが多い。
+     * metaVersion が無いと three‑vrm‑animation が失敗するため補完する。
+     * VRM 0.x → '0', VRM 1.x → '1' と推定して設定する。
+     * @param {import('@pixiv/three-vrm').VRM} vrm
+     */
+        function ensureVRMMeta(vrm) {
+      const inferredVer = (vrm.meta && 'version' in vrm.meta) ? '1' : '0';
 
-    function unloadCurrentVRM() {
-      if (currentVRM) {
-        currentVRM.scene.traverse((obj) => {
-          if (obj.isMesh) {
-            obj.geometry?.dispose();
-            if (obj.material.map) obj.material.map.dispose();
-            obj.material?.dispose();
-          }
+      if (vrm.meta == null) {
+        Object.defineProperty(vrm, 'meta', {
+          value: { metaVersion: inferredVer },
+          writable: false,
+          configurable: true,
         });
-        scene.remove(currentVRM.scene);
-        VRMUtils.deepDispose(currentVRM.scene);
-        currentVRM = null;
-      }
-      if (mixer) {
-        mixer.stopAllAction();
-        mixer = null;
+      } else if (vrm.meta.metaVersion == null) {
+        vrm.meta.metaVersion = inferredVer;
       }
     }
-
-    async function loadVRM(file) {
-      unloadCurrentVRM();
-
-      const loader = new GLTFLoader();
-      loader.register((parser) => new VRMLoaderPlugin(parser));
-
-      const arrayBuffer = await file.arrayBuffer();
-      const gltf = await loader.parseAsync(arrayBuffer, '');
-      const vrm = /** @type {import('@pixiv/three-vrm').VRM} */ (gltf.userData.vrm);
-      ensureVRMMeta(vrm);
-      currentVRM = vrm;
-      scene.add(vrm.scene);
-
-      log('Loaded VRM: ' + (vrm.meta?.title || file.name));
-
-      const hips = vrm.humanoid?.getNormalizedBoneNode('hips') || vrm.humanoid?.getRawBoneNode('hips');
-      if (hips) {
-        controls.target.copy(hips.getWorldPosition(new THREE.Vector3()));
-      } else {
-        controls.target.set(0, 1.2, 0);
-      }
-      controls.update();
-    }
-
-    async function loadAndPlayVRMA(file) {
-      if (!currentVRM) {
-        log('VRM を先に読み込んでください');
-        return;
       }
 
       const loader = new GLTFLoader();
@@ -182,9 +136,9 @@
         if (!resp.ok) throw new Error('idle.vrma not found');
         const buffer = await resp.arrayBuffer();
         await loadAndPlayVRMA(new File([buffer], 'idle.vrma'));
-      } catch (e) {
-        log('idle.vrma を読み込めませんでした（任意）');
-      }
+            else if (vrm.meta.metaVersion === '1.0') vrm.meta.metaVersion = '1';
+    }
+
     }
 
     // UI events
